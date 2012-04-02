@@ -11,8 +11,6 @@ IPT=/sbin/iptables
 TEMPDIR=/tmp
 #What tempfile you want to use
 TEMPFILE=$TEMPDIR/viking.lk
-#A second tempfile (currently unused)
-TEMPFILE2=$TEMPDIR/viking.mk
 #Where you want to permanently store your Viking data - /etc/viking is recommended for Debian/RHEL
 PERMDIR=/etc/viking
 #What you want to name your permanent ban file
@@ -71,6 +69,7 @@ if [ ! -f $PERMFILE ]
         iptables -A SYN_FLOOD -j LOG --log-level debug
         iptables -A SYN_FLOOD -j DROP
         iptables-save > $IPTSAVE && exit 0
+	chmod +x $IFUPDF
     else
         :
 fi
