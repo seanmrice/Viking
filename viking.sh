@@ -45,19 +45,11 @@ fi
 netstat -anp | grep 'tcp\|udp' | awk '{print $5 }' | cut -d: -f1 | sed '/^$/d' | sort | grep -v "0.0.0.0" | grep -v "127.0.0.1" | uniq -c | sort -n | sed '/^$/d' | sed -e 's/^[ \t]*//' | awk -F, '{ if ($0 > 50) print $0 }' | cut -d ' ' -f 2 >> $TEMPFILE
 #Count the tempfile contents by line.  If it has less than 1 entry, exit the script
 TFCOUNT=$(cat $TEMPFILE | wc -l)
-if [ "$TFCOUNT" -lt 1 ]
+if [ $TFCOUNT = 0 ]
     then
-        exit
+        exit 0
     else
         :
-fi
-# Create a new chain if it doesn't exist
-DLEXIST=$(iptables --list -n | grep -o "Chain droplist")
-if [ "$DLEXIST" = "Chain droplist" ]
-    then
-        :
-    else
-        $IPT -N droplist
 fi
 # Filter out comments and blank lines
 # store each ip or subnet in $ip
@@ -84,15 +76,6 @@ do
 done <"${TEMPFILE}"
 # Write the new IP to the ban list
 cat $TEMPFILE >> $PERMFILE
-# Finally, insert or append our black list
-if [ "$DLEXIST" = "Chain droplist" ]
-    then
-        :
-    else
-        $IPT -I INPUT -j droplist
-        $IPT -I OUTPUT -j droplist
-        $IPT -I FORWARD -j droplist
-fi
 # Remove the temp file
 rm $TEMPFILE
 # If there has been a new IP added to the firewall and ban list, save the firewall ruleset

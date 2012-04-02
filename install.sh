@@ -30,6 +30,10 @@ crontab -l > cronadd
 echo "* * * * * sh /usr/sbin/viking >> $LOGFILE" >> cronadd
 crontab cronadd
 rm cronadd
+$IPT -I INPUT -j droplist
+$IPT -I OUTPUT -j droplist
+$IPT -I FORWARD -j droplist
+$IPT -N droplist
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route
 echo 1 > /proc/sys/net/ipv4/tcp_syncookies
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects
