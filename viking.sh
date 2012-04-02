@@ -45,7 +45,7 @@ fi
 netstat -anp | grep 'tcp\|udp' | awk '{print $5 }' | cut -d: -f1 | sed '/^$/d' | sort | grep -v "0.0.0.0" | grep -v "127.0.0.1" | uniq -c | sort -n | sed '/^$/d' | sed -e 's/^[ \t]*//' | awk -F, '{ if ($0 > 50) print $0 }' | cut -d ' ' -f 2 >> $TEMPFILE
 #Count the tempfile contents by line.  If it has less than 1 entry, exit the script
 TFCOUNT=$(cat $TEMPFILE | wc -l)
-if [ $TFCOUNT = 0 ]
+if [ $TFCOUNT -eq 0 ]
     then
         exit 0
     else
@@ -53,7 +53,7 @@ if [ $TFCOUNT = 0 ]
 fi
 # Filter out comments and blank lines
 # store each ip or subnet in $ip
-egrep -v "^#|^$" $TEMPFILE | while IFS= read -r ip
+egrep -v "^#|^$" $TEMPFILE | sed '/^$/d' | sed -e 's/^[ \t]*//' | while IFS= read -r ip
 do
     # Append only the new IPs to the droplist
     # Check the iptables rules currently in place for the IP
