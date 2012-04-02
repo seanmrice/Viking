@@ -1,0 +1,4 @@
+#!/bin/bash
+PERMDIR=/etc/viking
+IPTSAVE=$PERMDIR/firewall.conf
+iptables-restore < $IPTSAVE

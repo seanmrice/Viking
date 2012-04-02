@@ -34,45 +34,6 @@ if [ "$VIKRUN" -gt 0 ]
     else
         :
 fi
-#If the $PERMFILE is not found, a first run is assumed and the hosts.deny file is parsed into the ban list, then firewall rules are added
-if [ ! -f $PERMFILE ]
-    then
-        #If the $PERMFILE directory doesn't exist, create it then add the iptables restore file
-        mkdir $PERMDIR &&  echo "#!/bin/bash" > $IFUPDF && echo "iptables-restore < $IPTSAVE" >> $IFUPDF
-        touch $PERMFILE
-        touch $NOBANLIST
-        #Add several useful anti DoS prevention techniques
-        echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route
-        echo 1 > /proc/sys/net/ipv4/tcp_syncookies
-        echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects
-        echo 0 > /proc/sys/net/ipv4/conf/all/send_redirects
-        echo 1 > /proc/sys/net/ipv4/conf/all/rp_filter
-        echo 1 > /proc/sys/net/ipv4/conf/all/log_martians
-        iptables -A INPUT -i lo -j ACCEPT
-        iptables -A OUTPUT -o lo -j ACCEPT
-        iptables -A FORWARD -o lo -j ACCEPT
-        iptables -A INPUT -p icmp --fragment -j LOG --log-level debug
-        iptables -A INPUT -p icmp --fragment -j DROP
-        iptables -A OUTPUT -p icmp --fragment -j LOG --log-level debug
-        iptables -A OUTPUT -p icmp --fragment -j DROP
-        iptables -A FORWARD -p icmp --fragment -j LOG --log-level debug
-        iptables -A FORWARD -p icmp --fragment -j DROP
-        iptables -A INPUT -p icmp -m limit --limit 1/s --limit-burst 2 -j ACCEPT
-        iptables -A INPUT -p icmp -m limit --limit 1/s --limit-burst 2 -j LOG --log-level debug
-        iptables -A INPUT -p icmp -j DROP
-        iptables -A OUTPUT -p icmp -j ACCEPT
-        iptables -A INPUT -m state --state NEW -p tcp --tcp-flags ALL ALL -j DROP
-        iptables -A INPUT -m state --state NEW -p tcp --tcp-flags ALL NONE -j DROP
-        iptables -N SYN_FLOOD
-        iptables -A INPUT -p tcp --syn -j SYN_FLOOD
-        iptables -A SYN_FLOOD -m limit --limit 5/s --limit-burst 10 -j RETURN
-        iptables -A SYN_FLOOD -j LOG --log-level debug
-        iptables -A SYN_FLOOD -j DROP
-        iptables-save > $IPTSAVE && exit 0
-	chmod +x $IFUPDF
-    else
-        :
-fi
 #input a defined value (IE - an IP address) into the tempfile
 if [ -n $1 ]
         then
