@@ -47,7 +47,7 @@ netstat -anp | grep 'tcp\|udp' | awk '{print $5 }' | cut -d: -f1 | sed '/^$/d' |
 TFCOUNT=$(cat $TEMPFILE | wc -l)
 if [ $TFCOUNT -eq 0 ]
     then
-        exit 0
+        exit
     else
         :
 fi
