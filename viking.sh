@@ -62,8 +62,7 @@ do
     HAIP=$(cat $HOSTSALLOW | grep -o $ip)
     # Check the whitelist for the IP
     NBIP=$(cat $NOBANLIST | grep -o $ip)
-    # If the SUM is <1, add the IP to the firewall ruleset
-    if [ $TIP || $HAIP || $NBIP != $ip ]
+    if [ $TIP != $ip ] && [$AIP != $ip ] && [ $NBIP != $ip ]
         then
             $IPT -A droplist -s $ip -j DROP
             #Tell the program it needs to save the firewall ruleset
