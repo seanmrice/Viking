@@ -26,14 +26,6 @@ IFUPDF=/etc/network/if-up.d/iptables
 #Logfile
 LOGFILE=/root/viking.log
 ##############################################################################
-#if Viking is already running, quit immediately
-VIKRUN=$(ps -e | grep -co "viking")
-if [ "$VIKRUN" -gt 0 ]
-    then
-        exit
-    else
-        :
-fi
 #input a defined value (IE - an IP address) into the tempfile
 if [ -n $1 ]
         then
@@ -42,18 +34,10 @@ if [ -n $1 ]
                 :
 fi
 #Collect information via netstat and write it to a temporary file if there are >50 concurrent connections from a single IP address
-netstat -anp | grep 'tcp\|udp' | awk '{print $5 }' | cut -d: -f1 | sed '/^$/d' | sort | grep -v "0.0.0.0" | grep -v "127.0.0.1" | uniq -c | sort -n | sed '/^$/d' | sed -e 's/^[ \t]*//' | awk -F, '{ if ($0 > 50) print $0 }' | cut -d ' ' -f 2 >> $TEMPFILE
-#Count the tempfile contents by line.  If it has less than 1 entry, exit the script
-TFCOUNT=$(cat $TEMPFILE | wc -l)
-if [ $TFCOUNT -eq 0 ]
-    then
-        exit
-    else
-        :
-fi
+netstat -anp | grep 'tcp\|udp' | awk '{print $5 }' | cut -d: -f1 | sed '/^$/d' | sort | grep -v "0.0.0.0" | grep -v "127.0.0.1" | uniq -c | sort -n | sed '/^$/d' | sed -e 's/^[ \t]*//' | awk -F, '{ if ($0 > 75) print $0 }' | cut -d ' ' -f 2 >> $TEMPFILE
 # Filter out comments and blank lines
 # store each ip or subnet in $ip
-egrep -v "^#|^$" $TEMPFILE | sed '/^$/d' | sed -e 's/^[ \t]*//' | while IFS= read -r ip
+egrep -v "^#|^$" $TEMPFILE | sed '/^$/d' | sed -e 's/^[ \t]*//' | while read -r ip
 do
     # Append only the new IPs to the droplist
     # Check the iptables rules currently in place for the IP
@@ -62,9 +46,12 @@ do
     HAIP=$(cat $HOSTSALLOW | grep -o $ip)
     # Check the whitelist for the IP
     NBIP=$(cat $NOBANLIST | grep -o $ip)
-    if [ $TIP != $ip ] && [$AIP != $ip ] && [ $NBIP != $ip ]
+    #NullCheck
+    NC="0.0.0.0"
+    NC2=" "
+    if [ -e $TEMPFILE ]
         then
-            $IPT -A droplist -s $ip -j DROP
+            $IPT -A INPUT -s $ip -j DROP
             #Tell the program it needs to save the firewall ruleset
             date >> $LOGFILE
             echo "$ip" >> $LOGFILE
@@ -72,7 +59,7 @@ do
         else
         :
     fi
-done <"${TEMPFILE}"
+done < $TEMPFILE
 # Write the new IP to the ban list
 cat $TEMPFILE >> $PERMFILE
 # Remove the temp file
@@ -82,7 +69,7 @@ if [ "$NEEDSAVE" = "1" ]
     then
         #Notify of new IP addresses added to the firewall, save the firewall, then exit
         echo "Added new IP addresses to the firewall" >> $LOGFILE
-        iptables-save > $IPTSAVE && exit 0
+        iptables-save > $IPTSAVE && NEEDSAVE="0" && exit 0
     else
         exit 0
 fi
